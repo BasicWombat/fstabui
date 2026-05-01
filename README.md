@@ -45,7 +45,7 @@ For SMB / CIFS shares you also need `cifs-utils`; for NFS you need `nfs-common` 
 No packaging step is required — the tool is a single self-contained script.
 
 ```bash
-git clone https://github.com/your-username/fstabui.git
+git clone https://github.com/BasicWombat/fstabui.git
 cd fstabui
 chmod +x fstab-admin.py
 ```
@@ -90,3 +90,7 @@ The application reads `/etc/fstab` on launch. Saving writes back to `/etc/fstab`
 ## License
 
 MIT
+
+---
+
+*This README was generated with [Claude Code](https://claude.ai/code).*

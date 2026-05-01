@@ -1372,10 +1372,10 @@ class FstabAdminWindow(Gtk.ApplicationWindow):
             "with privilege-aware saving."
         )
         dlg.set_license_type(Gtk.License.MIT_X11)
-        dlg.set_website("https://github.com")
-        dlg.set_website_label("Source")
+        dlg.set_website("https://github.com/BasicWombat/fstabui")
+        dlg.set_website_label("GitHub")
         dlg.set_logo_icon_name("drive-harddisk")
-        dlg.set_authors(["fstabUI Contributors"])
+        dlg.set_authors(["BasicWombat"])
         dlg.run()
         dlg.destroy()
 
