@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(git -C /home/daniel/Documents/fstabui status)",
+      "Bash(git -C /home/daniel/Documents/fstabui diff)",
+      "Bash(git -C /home/daniel/Documents/fstabui add fstab-admin.py)",
+      "Bash(git -C /home/daniel/Documents/fstabui commit -m ' *)",
+      "Bash(git *)"
     ]
   }
 }
