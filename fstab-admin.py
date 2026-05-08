@@ -946,6 +946,7 @@ class FstabAdminWindow(Gtk.ApplicationWindow):
         file_menu.append(item("Reload",    self._load,    "<Control>r"))
         file_menu.append(Gtk.SeparatorMenuItem())
         file_menu.append(item("Save",      self._save,    "<Control>s"))
+        file_menu.append(item("Apply Mounts", self._reload_mounts, "<Control><Shift>m"))
         file_menu.append(Gtk.SeparatorMenuItem())
         quit_item = Gtk.MenuItem(label="Quit")
         quit_item.connect("activate", lambda _: self.close())
@@ -1033,6 +1034,9 @@ class FstabAdminWindow(Gtk.ApplicationWindow):
         self._save_btn = btn("document-save", "Save",
                              "Save changes to /etc/fstab (requires authentication)",
                              self._save)
+        btn("media-playback-start", "Apply Mounts",
+            "Run systemctl daemon-reexec and mount -a to apply fstab changes  (Ctrl+Shift+M)",
+            self._reload_mounts)
 
         return tb
 
@@ -1312,6 +1316,67 @@ class FstabAdminWindow(Gtk.ApplicationWindow):
             )
             dlg.format_secondary_text(sec)
             dlg.run(); dlg.destroy()
+
+    def _reload_mounts(self):
+        dlg = Gtk.MessageDialog(
+            transient_for=self, modal=True,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Apply fstab changes to the running system?",
+        )
+        dlg.format_secondary_text(
+            "This will run:\n"
+            "  systemctl daemon-reexec\n"
+            "  mount -a\n\n"
+            "Authentication may be required."
+        )
+        resp = dlg.run()
+        dlg.destroy()
+        if resp != Gtk.ResponseType.YES:
+            return
+
+        shell_cmd = "systemctl daemon-reexec && mount -a"
+        r = None
+        for escalate in (["pkexec", "sh", "-c"], ["sudo", "sh", "-c"]):
+            try:
+                r = subprocess.run(escalate + [shell_cmd],
+                                   capture_output=True, text=True, timeout=30)
+                break
+            except FileNotFoundError:
+                continue
+            except subprocess.TimeoutExpired:
+                self._err("Command timed out after 30 seconds.")
+                return
+
+        if r is None:
+            self._err("Could not escalate privileges.\npkexec and sudo are both unavailable.")
+            return
+
+        output = (r.stdout + r.stderr).strip()
+        if r.returncode == 0:
+            result_dlg = Gtk.MessageDialog(
+                transient_for=self, modal=True,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text="Mounts applied successfully.",
+            )
+            sec = "systemctl daemon-reexec and mount -a completed without errors."
+            if output:
+                sec += f"\n\n{output}"
+            result_dlg.format_secondary_text(sec)
+            self._set_status("Mounts reloaded successfully.")
+        else:
+            result_dlg = Gtk.MessageDialog(
+                transient_for=self, modal=True,
+                message_type=Gtk.MessageType.WARNING,
+                buttons=Gtk.ButtonsType.OK,
+                text="Mount reload had errors.",
+            )
+            result_dlg.format_secondary_text(output or "Command failed with no output.")
+            self._set_status("Mount reload had errors — see dialog.")
+
+        result_dlg.run()
+        result_dlg.destroy()
 
     # ── Keyboard handler ──────────────────────────────────────────────────────
 
